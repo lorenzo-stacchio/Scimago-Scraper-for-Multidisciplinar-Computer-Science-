@@ -9,6 +9,8 @@ import pickle, os, json, ast
 import tqdm
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import urllib.request 
+import pandas as pd
 
 def get_cookies(path: str) -> dict:
     """
@@ -45,19 +47,26 @@ def get_cookies(path: str) -> dict:
 def click_cookie(driver):
     button_xpath = "//button[@class='fc-button fc-cta-consent fc-primary-button']"
     # button class="fc-button fc-cta-consent fc-primary-button" role="button" aria-label="Acconsento" tabindex="0"><div class="fc-button-background"></div><p class="fc-button-label">Acconsento</p></button>    
-    button_element = driver.find_element(By.XPATH, button_xpath)
-    button_element.click()
+    try: 
+        button_element = driver.find_element(By.XPATH, button_xpath)
+        button_element.click()
+    except Exception as e:
+        pass
 
 def check_SSID(driver, url, ssids):
     driver.get(url)
     time.sleep(1)
     path_categories ="//div[@class='journalgrid']//div[@style='height: auto !important;']//ul//li//a"
-    el = None
-    while not el:
-        el = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, path_categories)))
+    # el = None
+    # while not el:
+    #     try:
+    #         el = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, path_categories)))
+    #     except Exception as e:
+    #         pass
+    time.sleep(1)
     rows = driver.find_elements(By.XPATH, path_categories)
     rows = [r.get_attribute("href").split("=")[1] for r in rows]
-    truthness = any([ssid in rows for ssid in ssids])
+    truthness = [ssid for ssid in ssids if ssid in rows]
     return truthness
 
 def parse_page(driver, ssids):
@@ -74,10 +83,26 @@ def parse_page(driver, ssids):
         href = cells[1].find_element(By.TAG_NAME, "a").get_attribute("href")
         if "Q1" in row_data[3]:
             # check scientific sectors
-            good_items[href] = tuple(row_data[1:4])
+            good_items[href] = row_data[1:4]
     ## Map compatible journals
-    good_items = [v for k,v in good_items.items() if check_SSID(driver,k,ssids)]
+    # toret = []
+    # for k,v in tqdm.tqdm(good_items.items(), total=len(good_items), desc="Parsing page"):
+    #     cat = check_SSID(driver,k,ssids)
+    #     if len(cat)>0:
+    #         v.append(cat)
+    #         toret.append(v)
     return good_items
+
+
+def download_url_and_dataframe_update(url, filter_category, contribution_name):
+    urllib.request.urlretrieve(url, "test.csv")
+    temp_df = pd.read_csv("test.csv", sep=";")
+    filtered = temp_df["Categories"].str.contains(filter_category)
+    temp_df = temp_df[filtered]
+    temp_df = temp_df[["Rank","Title","H index","Publisher","Categories"]]
+    temp_df.to_csv(f"{filter_category}_{contribution_name}.csv", index=False)
+    temp_df.to_excel(f"{filter_category}_{contribution_name}.xlsx", index=False)
+
 
 def get_pagination(driver):
     pagination = "//div[@class='half_block']//div[@class='pagination']"
@@ -87,47 +112,12 @@ def get_pagination(driver):
     return int(num) 
 
 pivot_code = "1700"
-list_search = ["1211,1702"]
-list_types = ["j"]
+filter_cat = ["Philosophy"]
+list_types = ["j", "p"]
+
 
 if __name__=="__main__":
-    # Set up Chrome options
-    chrome_options = Options()
-    # Path to the Chrome WebDriver executable
-    # chrome_options.add_argument('--headless')
-    good_items_dict = {}
-    items_per_page = 50
-    # Start the WebDriver
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()),options=chrome_options)
-    url = "https://www.scimagojr.com"
-
-    driver.get(url)
-    time.sleep(1)
-
-    if os.path.exists("cookies.txt"):
-        # Deserialize the cookie from the file
-        cookies = get_cookies("cookies.txt")
-        for c in cookies: 
-            try:
-                driver.add_cookie(c)
-            except Exception as e:
-                print(e)
-        print("Cookie loaded")  
-    time.sleep(1)
     for contr_type in list_types:
-        good_items_dict[contr_type] = []
-        url_temp = f"https://www.scimagojr.com/journalrank.php?area={pivot_code}&type={contr_type}"
-        driver.get(url_temp)
-        time.sleep(2)
-        click_cookie(driver)
-        total_rows = get_pagination(driver)
-        pages = (total_rows//items_per_page) + (total_rows%items_per_page != 0)
-        # tqdm.tqdm(good_items.items(), total = len(good_items)) 
-        for pageidx in tqdm.tqdm(range(1,pages), total = pages):
-            url_temp = f"https://www.scimagojr.com/journalrank.php?area={pivot_code}&type={contr_type}&page={pageidx}&total_size={total_rows}"
-            driver.get(url_temp)
-            time.sleep(2)
-            good_items_dict[contr_type].extend(parse_page(driver=driver,ssids=list_search))
-            print(f"Found items {len(good_items_dict)}")
-    # Wait for the page to load
-    time.sleep(30)
+        for cat in filter_cat:
+            url_temp = f"https://www.scimagojr.com/journalrank.php?area={pivot_code}&type={contr_type}&out=xls"
+            download_url_and_dataframe_update(url=url_temp, filter_category=cat, contribution_name=contr_type)

@@ -1,10 +1,23 @@
 import urllib.request 
 import pandas as pd
+import os 
 
+def checkdircreate(path):
+    if not os.path.exists(path):
+        os.mkdir(path)
+        
 
-def download_url_and_dataframe_update(url, filter_area,filter_subareas,contribution_name):
-    urllib.request.urlretrieve(url, f"test_{contribution_name}.csv")
-    temp_df = pd.read_csv(f"test_{contribution_name}.csv", sep=";")
+def download_url_and_dataframe_update(url, filter_area, filter_subareas,contribution_name):
+    folder_path = f"outs/{filter_area}/"
+    checkdircreate(folder_path)
+    merged = "_".join(filter_subareas)
+    subfolder_path = f"{folder_path}{merged}/"
+    checkdircreate(subfolder_path)
+
+    csv_temp_path = f"{subfolder_path}test_{contribution_name}.csv"
+    urllib.request.urlretrieve(url, csv_temp_path)
+    temp_df = pd.read_csv(csv_temp_path, sep=";")
+    
     ## Filter by area
     temp_df = temp_df[temp_df["Areas"].str.contains(filter_area)]
     ## Filter by category
@@ -13,13 +26,14 @@ def download_url_and_dataframe_update(url, filter_area,filter_subareas,contribut
 
     temp_df = temp_df[["Rank","SJR","Title","H index","Publisher","Areas", "Categories"]]
     temp_df["SJR"] = temp_df["SJR"].apply(lambda x: float(str(x).replace(",",".")))
-    temp_df.to_csv(f"{filter_area}_{contribution_name}.csv", index=False)
-    temp_df.to_excel(f"{filter_area}_{contribution_name}.xlsx", index=False)
+    temp_df.to_csv(f"{subfolder_path}{filter_area}_{contribution_name}.csv", index=False)
+    temp_df.to_excel(f"{subfolder_path}{filter_area}_{contribution_name}.xlsx", index=False)
 
 
 pivot_code = "1700" # computer scienc
-filter_area = {"Economics, Econometrics and Finance":[], "Business, Management and Accounting":["Business and International Management", "Management Information Systems"]}
-list_types = ["j"] #, "p"]
+# filter_area = {"Economics, Econometrics and Finance":[], "Business, Management and Accounting":["Business and International Management", "Management Information Systems"]}
+filter_area = {"Economics, Econometrics and Finance":[], "Business, Management and Accounting":[]}
+list_types = ["j", "p"]
 
 
 if __name__=="__main__":

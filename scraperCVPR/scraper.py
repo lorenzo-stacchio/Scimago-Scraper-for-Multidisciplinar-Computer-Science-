@@ -32,14 +32,18 @@ def dataframe_to_excel_workbook(index_url_columns):
 # URL of the page you want to scrape
 url = 'https://cvpr.thecvf.com/Conferences/2024/AcceptedPapers'
 
-keywords = ["Nerf", "Gaussian splatting", "Inpainting", "cultural", "3D generation", "fashion", "neural radiance",
-            "human-centric", "video generation", "video synthesis", "pano", "personalized", "multimodal"]
+# keywords = ["Nerf", "Gaussian splatting", "Inpainting", "cultural", "3D generation", "fashion", "neural radiance",
+#             "human-centric", "video generation", "video synthesis", "pano", "personalized", "multimodal"]
+
+keywords = ["Nerf", "Gaussian splatting", "cultural", "3D generation", "fashion", "neural radiance",
+            "human-centric", "video generation", "video synthesis", "pano", "personalized"]
+
 
 keywords = [x.lower() for x in keywords]
 
 # Send a GET request to the URL
 response = requests.get(url)
-papers, keywords_found, refs, authors = [], [], [], []
+papers, keywords_found, refs, authors, poster_session = [], [], [], [], []
 
 # Check if the request was successful
 if response.status_code == 200:
@@ -64,8 +68,9 @@ if response.status_code == 200:
             # print(ks)
             if len(ks) > 0:
                 # print(paper,"---",author)
-                paper = paper.split("Poster Session")[0]
-                papers.append(paper)
+                paper, indexes = paper.split("Poster Session") # e.g. Eyes Wide Shut? Exploring the Visual Shortcomings of Multimodal LLMs Poster Session 3
+                papers.append(paper.strip())
+                poster_session.append(f"Poster Session {int(indexes)}")
                 keywords_found.append(",".join(ks))
                 author = author.replace(" · ", ", ").strip()
                 authors.append(author)
@@ -85,6 +90,7 @@ else:
 df = pd.DataFrame()
 
 df["paper"] = papers
+df["poster_session"] = poster_session
 df["project_page"] = ["Yes" if ref else "No" for ref in refs]
 df["url"] = refs
 df["keywords"] = keywords_found

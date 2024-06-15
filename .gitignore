@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 cookies.txt
 outs/*/
+scraperCVPR/word_files/*.docx

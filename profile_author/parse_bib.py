@@ -9,7 +9,7 @@ import tqdm
 
 
 def parse_biblatex_file(file_path):
-    with open(file_path, 'r') as bib_file:
+    with open(file_path, 'r', encoding="utf-8") as bib_file:
         bib_database = bibtexparser.load(bib_file)
     return bib_database
 
@@ -33,21 +33,22 @@ def get_journal_csv(year, path):
     return pd.read_csv(out_path, sep=";")
 
 
-def get_quartile(name, year):
+def get_quartile(name, year, threshold = 10):
     df_journal = get_journal_csv(year, scimago_folder)
-    best_match = ""        
+    best_match = ""  
+    best_url = ""      
     min_distance = float("inf")
+    print("\nJOURNAL NAME", name)
     for idx, row in df_journal.iterrows():
-        # print(row["Title"])
-        d = Levenshtein.distance(row["Title"], name)
-        if d < min_distance:
+        d = Levenshtein.distance(row["Title"].lower(), name.lower())
+        # threshold guarantees that non correct or similar name journals are not matched
+        if d < threshold and d < min_distance:
             best_match = row["SJR Best Quartile"]
             min_distance = d
     return best_match
 
 # Example usage
-file_path = 'profile_author\stacchio.bib'
-bib_database = parse_biblatex_file(file_path)
+
 
 
 df_recap = pd.DataFrame(
@@ -55,24 +56,35 @@ df_recap = pd.DataFrame(
 scimago_folder = "profile_author\\scimago\\"
 
 # Access entries
+# author_name = "Lorenzo Stacchio"
+
+author_name = "Pasquale Cascarano"
+file_path = 'profile_author\cascarano.bib'
+bib_database = parse_biblatex_file(file_path)
 entries = bib_database.entries
 
-author_name = "Lorenzo Stacchio"
 
 for entry in tqdm.tqdm(entries, total=len(entries)):
-    title = entry["title"]
-    Type = entry["ENTRYTYPE"]
-    year = entry["year"]
-    if Type == "article":
-        JCName = entry["journal"]
-        quartile = get_quartile(JCName,year)
-
-    else:
-        JCName = entry["booktitle"]
-        quartile = ""
-
-    # print(entry["ENTRYTYPE"])
-    df_recap = df_recap._append({"Title": title, "Type": Type, "JCName": JCName,
-                                "Quartile": quartile, "Year": year}, ignore_index=True)
-
+    try:
+        title = entry["title"]
+        Type = entry["ENTRYTYPE"]
+        year = entry["year"]
+        if Type == "article":
+            JCName = entry["journal"]
+            quartile = get_quartile(JCName,year)
+            if quartile == "" or quartile == "-": # do not match computer science
+                continue
+        else:
+            JCName = entry["booktitle"]
+            quartile = ""
+       
+        # print(entry["ENTRYTYPE"])
+        df_recap = df_recap._append({"Title": title, "Type": Type, "JCName": JCName,
+                                    "Quartile": quartile, "Year": year}, ignore_index=True)
+    except Exception as e:
+        #print("Error: ", e)
+        pass
+        
 df_recap.to_excel(f"profile_author\\{author_name}.xlsx")
+
+print(df_recap.Quartile.value_counts())

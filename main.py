@@ -38,8 +38,9 @@ pivot_code = "1700" # computer science
 # filter_area = {"Arts and Humanities":["Visual Arts and Performing Arts"]}
 # filter_area = {"Arts and Humanities":[""]}
 # filter_area = {"Social Sciences":["Education", "E-learning"]}
+# filter_area = {"Engineering":["Electrical and Electronic Engineering"]}
 
-filter_area = {"Engineering":["Electrical and Electronic Engineering"]}
+filter_area = {"Environmental Science": []}
 
 list_types = ["j", "p"]
 

@@ -39,7 +39,8 @@ pivot_sub_area_code = None  # eletrical and electronic engineering
 # filter_area = {"Arts and Humanities":[""]}
 # filter_area = {"Social Sciences":["Education", "E-learning"]}
 
-filter_area = {"Engineering": ["Electrical and Electronic Engineering"],"Medicine": ["Health Informatics"]}
+# filter_area = {"Engineering": ["Electrical and Electronic Engineering"],"Medicine": ["Health Informatics"]}
+filter_area = {"Environmental Science": []}
 
 #filter_area = {"Medicine": ["Health Informatics"],"Computer Science": []}
 
@@ -71,8 +72,9 @@ if __name__ == "__main__":
         else:
             temp_df = temp_df[["Rank", "SJR", "Title", "SJR Best Quartile",
                         "H index", "Publisher", "Areas", "Categories"]]
-            
+        
         temp_df["SJR"] = temp_df["SJR"].apply(
             lambda x: float(str(x).replace(",", ".")))
         # temp_df.to_csv(f"{subfolder_path}{filter_area}_{contribution_name}.csv", index=False)
-        temp_df.to_csv(f"outs/temp_formatted_{suffix}_{contr_type}.csv")
+        temp_df.to_csv(f"outs/{suffix}_{contr_type}.csv", index=False)
+        temp_df.to_excel(f"outs/{suffix}_{contr_type}.xlsx", index=False)

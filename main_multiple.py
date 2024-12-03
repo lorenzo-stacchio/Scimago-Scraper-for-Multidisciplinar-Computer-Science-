@@ -1,7 +1,8 @@
 import urllib.request
 import pandas as pd
 import os
-
+import argparse
+import json 
 
 def checkdircreate(path):
     if not os.path.exists(path):
@@ -28,26 +29,35 @@ def dataframe_update(temp_df, filter_area, filter_subareas):
 pivot_area_code = "1700"  # computer science
 pivot_sub_area_code = None  # eletrical and electronic engineering
 
-# pivot_area_code = "2200"  # eletrical and electronic engineering
-# pivot_sub_area_code = "2208"  # eletrical and electronic engineering
 
-# pivot_code = "1400"
-# pivot_code = "2000"
-# filter_area = {"Economics, Econometrics and Finance":[], "Business, Management and Accounting":["Business and International Management", "Management Information Systems"]}
-# filter_area = {"Economics, Econometrics and Finance":[], "Business, Management and Accounting":[]}
-# filter_area = {"Arts and Humanities":["Visual Arts and Performing Arts"]}
-# filter_area = {"Arts and Humanities":[""]}
-# filter_area = {"Social Sciences":["Education", "E-learning"]}
-
-# filter_area = {"Engineering": ["Electrical and Electronic Engineering"],"Medicine": ["Health Informatics"]}
-filter_area = {"Environmental Science": []}
-
-#filter_area = {"Medicine": ["Health Informatics"],"Computer Science": []}
-
-list_types = ["j", "p"]
-
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="A script that demonstrates argparse.")
+    # Add arguments
+    parser.add_argument(
+        "-c", "--config", 
+        type=str, 
+        help="The path to the config json", 
+        required=True
+    )
+    parser.add_argument(
+        "-sub", "--sub_area_computer_science_code", 
+        type=int, 
+        help="Numerical Code from scimago for the subarea of computer science (Artificial Intelligence is 1702)", 
+    )
+    
+    # Parse the arguments
+    args = parser.parse_args()
+    return args
+    
 
 if __name__ == "__main__":
+    args = parse_arguments()
+    filter_area = json.load(open(args.config)) #{"Medicine":["Orthopedics and Sports Medicine"]}
+
+    mode = "aggregative" # or cascade filter
+
+    # mode = "cascade" # or cascade filter
+    list_types = ["j", "p"]
     path_csv_temp = f"outs/temp.csv"
     for contr_type in list_types:
         if pivot_sub_area_code:
@@ -57,24 +67,36 @@ if __name__ == "__main__":
 
         download_url(url_temp, path_csv_temp)
         temp_df = pd.read_csv(path_csv_temp, sep=";")
+        final_df = pd.DataFrame(columns=temp_df.columns)
         suffix = ""
         for area, subarea in filter_area.items():
-            temp_df = dataframe_update(
+            area_subare_df = dataframe_update(
                 temp_df=temp_df, filter_area=area, filter_subareas=subarea)
-            suffix += f"{area}" + "_".join(subarea)
+            if mode == "aggregative":
+                final_df = pd.concat([final_df,area_subare_df])
+            else: 
+                temp_df = area_subare_df
+                
+            suffix += f"{area}_" + "_".join(subarea)
         
+         
+        out_dir = f"outs/{suffix}/"
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        if not mode == "aggregative":
+            final_df = temp_df
         # print(temp_df)
         # print(temp_df.columns)
 
         ## final format
         if pivot_sub_area_code:
-            temp_df = temp_df[["Rank", "SJR", "Title", "SJR Quartile", "H index", "Publisher", "Areas", "Categories"]]
+            final_df = final_df[["Rank", "SJR", "Title", "SJR Quartile", "H index", "Publisher", "Areas", "Categories"]]
         else:
-            temp_df = temp_df[["Rank", "SJR", "Title", "SJR Best Quartile",
+            final_df = final_df[["Rank", "SJR", "Title", "SJR Best Quartile",
                         "H index", "Publisher", "Areas", "Categories"]]
         
-        temp_df["SJR"] = temp_df["SJR"].apply(
+        final_df["SJR"] = final_df["SJR"].apply(
             lambda x: float(str(x).replace(",", ".")))
         # temp_df.to_csv(f"{subfolder_path}{filter_area}_{contribution_name}.csv", index=False)
-        temp_df.to_csv(f"outs/{suffix}_{contr_type}.csv", index=False)
-        temp_df.to_excel(f"outs/{suffix}_{contr_type}.xlsx", index=False)
+        final_df.to_csv(f"{out_dir}/{suffix}_{contr_type}.csv", index=False)
+        final_df.to_excel(f"{out_dir}/{suffix}_{contr_type}.xlsx", index=False)

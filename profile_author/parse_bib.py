@@ -78,9 +78,9 @@ def get_quartile(name, year, type_pub, threshold=10):
         # print("\nJOURNAL NAME", name)
         for idx, row in df_journal.iterrows():
             d = Levenshtein.distance(row["Title"].lower(), name.lower())
-            if "sensors" in row["Title"].lower():
-                print(row["Title"].lower())
-                print(name, d)
+            # if "sensors" in row["Title"].lower():
+            #     print(row["Title"].lower())
+            #     print(name, d)
             # threshold guarantees that non correct or similar name journals are not matched
             if d < threshold and d < min_distance:
                 best_match = row["SJR Best Quartile"]
@@ -109,7 +109,8 @@ scimago_folder = "profile_author\\scimago\\"
 # Access entries
 # author_name = "Pasquale Cascarano"
 # file_path = 'profile_author\cascarano.bib'
-file_path = 'profile_author\pietrini.bib'
+# file_path = 'profile_author\pietrini.bib'
+file_path = 'profile_author\\stacchio.bib'
 
 # file_path = 'profile_author\stacchio.bib'
 author_name = os.path.basename(file_path).split(".")[0]  # "Lorenzo Stacchio"

@@ -46,3 +46,7 @@ python main.py --config configs/example_macro.json --sub_area_computer_science_c
 ```
 
 Outputs are saved in ```outs/```
+
+## TODOs
+
+- [ ] Make the scaper modular with respect to any tuple of Scimago classifications; 

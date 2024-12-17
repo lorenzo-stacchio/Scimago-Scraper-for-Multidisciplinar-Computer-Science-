@@ -49,4 +49,4 @@ Outputs are saved in ```outs/```
 
 ## TODOs
 
-- [ ] Make the scaper modular with respect to any tuple of Scimago classifications; 
+- [ ] Make the scaper modular with respect to any tuple of Scimago classifications;

@@ -1,4 +1,4 @@
-# scraper_scimago
+# Scimago Scraper for Multidisciplinar Journal (with respect To Computer Science)
 scraper_scimago
 
 

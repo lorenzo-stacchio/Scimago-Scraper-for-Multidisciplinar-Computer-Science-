@@ -18,14 +18,14 @@ The config file could also be a empty dict, in that case, only computer science 
 
 
 ```
-python main_multiple.py --config <name_config_file>.json
+python main.py --config <name_config_file>.json
 ```
 
 
 An example with macro class is:
 
 ```
-python main_multiple.py --config configs/example_macro.json
+python main.py --config configs/example_macro.json
 ```
 
 
@@ -33,14 +33,14 @@ python main_multiple.py --config configs/example_macro.json
 An example with macro and micro class is:
 
 ```
-python main_multiple.py --config configs/example_macro_micro.json
+python main.py --config configs/example_macro_micro.json
 ```
 
 
 An example with sub code artificial intelligence is:
 
 ```
-python main_multiple.py --config configs/example_macro.json --sub_area_computer_science_code 1702
+python main.py --config configs/example_macro.json --sub_area_computer_science_code 1702
 ```
 
 Outputs are saved in ```outs/```
